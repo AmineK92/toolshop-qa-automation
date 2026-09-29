@@ -10,3 +10,10 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 
 ## Status
 Day 1: environment set up, first API and UI tests.
+
+## What is tested (API)
+- Authentication: token contract, invalid credentials, protected endpoints
+- Brands: full CRUD lifecycle, validation errors (422 / 409)
+- Security (OWASP API Top 10): 401 vs 403, BOLA, admin-only functions, mass assignment
+- Known issue documented with `test.fail`: anonymous brand creation
+- Test data: unique per test, automatically cleaned up by fixtures
