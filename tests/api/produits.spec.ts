@@ -1,14 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/fixtures';
+import { parseWithSchema } from '../../src/schemas/parse';
+import { ProductPageSchema } from '../../src/schemas/product.schema';
 
-test('GET /products renvoie une liste de produits', async ({ request }) => {
-  const response = await request.get('/products');
+test('GET /products renvoie une page de produits conforme au contrat', async ({ api }) => {
+  const response = await api.getProducts();
   expect(response.status()).toBe(200);
 
-  const body = await response.json();
-  expect(body.data.length).toBeGreaterThan(0);
-
-  const premierProduit = body.data[0];
-  expect(typeof premierProduit.id).toBe('string');
-  expect(typeof premierProduit.name).toBe('string');
-  expect(premierProduit.price).toBeGreaterThan(0);
+  const productPage = parseWithSchema(ProductPageSchema, await response.json());
+  expect(productPage.data.length).toBeGreaterThan(0);
 });
