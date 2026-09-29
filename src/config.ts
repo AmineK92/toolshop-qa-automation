@@ -18,4 +18,8 @@ export const config = {
     email: requireEnv('CUSTOMER_EMAIL'),
     password: requireEnv('CUSTOMER_PASSWORD'),
   },
+  admin: {
+    email: requireEnv('ADMIN_EMAIL'),
+    password: requireEnv('ADMIN_PASSWORD'),
+  },
 };
