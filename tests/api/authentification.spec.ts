@@ -1,42 +1,31 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/fixtures';
+import { config } from '../../src/config';
+import { parseWithSchema } from '../../src/schemas/parse';
+import { TokenSchema, UserSchema } from '../../src/schemas/user.schema';
 
-const CLIENT = {
-  email: 'customer@practicesoftwaretesting.com',
-  password: 'welcome01',
-};
-
-test('connexion réussie avec le compte client', async ({ request }) => {
-  const response = await request.post('/users/login', { data: CLIENT });
+test('connexion réussie : l’API renvoie un jeton conforme', async ({ api }) => {
+  const response = await api.login(config.customer.email, config.customer.password);
   expect(response.status()).toBe(200);
-
-  const body = await response.json();
-  expect(body.access_token).toBeTruthy();
+  parseWithSchema(TokenSchema, await response.json());
 });
 
-test('connexion refusée pour un e-mail inconnu', async ({ request }) => {
-  const response = await request.post('/users/login', {
-    data: { email: 'inconnu@example.com', password: 'mauvais-mot-de-passe' },
-  });
+test('connexion refusée pour un e-mail inconnu', async ({ api }) => {
+  const response = await api.login('inconnu@example.com', 'mauvais-mot-de-passe');
   expect(response.status()).toBe(401);
-
-  const body = await response.json();
-  expect(body.error).toBe('Unauthorized');
+  expect(await response.json()).toEqual({ error: 'Unauthorized' });
 });
 
-test('GET /users/me renvoie le profil du client connecté', async ({ request }) => {
-  const connexion = await request.post('/users/login', { data: CLIENT });
-  const { access_token } = await connexion.json();
-
-  const response = await request.get('/users/me', {
-    headers: { Authorization: `Bearer ${access_token}` },
-  });
+test('GET /users/me renvoie le profil du client, sans le mot de passe', async ({ api, customerToken }) => {
+  const response = await api.getMe(customerToken);
   expect(response.status()).toBe(200);
 
-  const profil = await response.json();
-  expect(profil.email).toBe(CLIENT.email);
+  const body = await response.json();
+  const profile = parseWithSchema(UserSchema, body);
+  expect(profile.email).toBe(config.customer.email);
+  expect(body).not.toHaveProperty('password');
 });
 
-test('GET /users/me sans jeton est refusé', async ({ request }) => {
-  const response = await request.get('/users/me');
+test('GET /users/me sans jeton est refusé', async ({ api }) => {
+  const response = await api.getMe();
   expect(response.status()).toBe(401);
 });

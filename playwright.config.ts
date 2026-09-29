@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config } from './src/config';
 
 export default defineConfig({
   testDir: './tests',
@@ -8,21 +9,14 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: config.uiUrl,
     testIdAttribute: 'data-test',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
 
   projects: [
-    {
-      name: 'api',
-      testDir: './tests/api',
-      use: {
-        baseURL: 'http://localhost:8091',
-        extraHTTPHeaders: { Accept: 'application/json' },
-      },
-    },
+    { name: 'api', testDir: './tests/api' },
     {
       name: 'ui-chromium',
       testDir: './tests/ui',

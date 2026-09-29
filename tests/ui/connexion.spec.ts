@@ -1,10 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/fixtures';
+import { config } from '../../src/config';
 
 test('un client se connecte et arrive sur son compte', async ({ page }) => {
   await page.goto('/auth/login');
 
-  await page.getByTestId('email').fill('customer@practicesoftwaretesting.com');
-  await page.getByTestId('password').fill('welcome01');
+  await page.getByTestId('email').fill(config.customer.email);
+  await page.getByTestId('password').fill(config.customer.password);
   await page.getByTestId('login-submit').click();
 
   await expect(page).toHaveURL(/\/account$/);
