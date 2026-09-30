@@ -1,24 +1,23 @@
 import { test, expect } from '../../src/fixtures';
 import { config } from '../../src/config';
+import { Header } from '../../src/components/header';
+import { AccountPage } from '../../src/pages/account-page';
+import { LoginPage } from '../../src/pages/login-page';
 
-test('un client se connecte et arrive sur son compte', async ({ page }) => {
-  await page.goto('/auth/login');
-
-  await page.getByTestId('email').fill(config.customer.email);
-  await page.getByTestId('password').fill(config.customer.password);
-  await page.getByTestId('login-submit').click();
+test('customer signs in with the form and lands on the account page', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.login(config.customer.email, config.customer.password);
 
   await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByTestId('page-title')).toHaveText('My account');
-  await expect(page.getByTestId('nav-menu')).toContainText('Jane Doe');
+  await expect(new AccountPage(page).title).toHaveText('My account');
+  await expect(new Header(page).userMenu).toContainText('Jane Doe');
 });
 
-test('un e-mail inconnu affiche un message d’erreur', async ({ page }) => {
-  await page.goto('/auth/login');
+test('an unknown email shows an error message', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.login('unknown@example.com', 'wrong-password');
 
-  await page.getByTestId('email').fill('inconnu@example.com');
-  await page.getByTestId('password').fill('mauvais-mot-de-passe');
-  await page.getByTestId('login-submit').click();
-
-  await expect(page.getByTestId('login-error')).toContainText('Invalid email or password');
+  await expect(loginPage.errorMessage).toContainText('Invalid email or password');
 });
