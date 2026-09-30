@@ -1,9 +1,10 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 import { ToolshopApi } from './api/toolshop-api';
 import { config } from './config';
 import { newBrandData, newCustomerData } from './data/factories';
 import { BrandSchema, type Brand } from './schemas/brand.schema';
 import { parseWithSchema } from './schemas/parse';
+import { signInWithToken } from './ui/session';
 
 type Cleanup = {
   brand: (id?: string) => void;
@@ -19,15 +20,18 @@ type Fixtures = {
   cleanup: Cleanup;
   createTestBrand: () => Promise<Brand>;
   createTestCustomer: () => Promise<TestCustomer>;
+  customerPage: Page;
 };
 
 export const test = base.extend<Fixtures>({
   api: async ({ playwright }, use) => {
+    // Setup: an HTTP client bound to the API, whatever the test project
     const context = await playwright.request.newContext({
       baseURL: config.apiUrl,
       extraHTTPHeaders: { Accept: 'application/json' },
     });
     await use(new ToolshopApi(context));
+    // Teardown: runs after the test, even when it fails
     await context.dispose();
   },
 
@@ -48,8 +52,8 @@ export const test = base.extend<Fixtures>({
       user: (id) => { if (id) userIds.push(id); },
     });
 
-    // Après le test, même en cas d'échec : on supprime tout ce qui a été enregistré.
-    // Une donnée déjà supprimée par le test renvoie 404, ce qui est sans conséquence.
+    // After the test, even when it fails: delete everything that was registered.
+    // Data already deleted by the test returns 404, which is harmless.
     for (const id of brandIds) await api.deleteBrand(id, adminToken);
     for (const id of userIds) await api.deleteUser(id, adminToken);
   },
@@ -57,7 +61,7 @@ export const test = base.extend<Fixtures>({
   createTestBrand: async ({ api, cleanup }, use) => {
     await use(async () => {
       const response = await api.createBrand(newBrandData());
-      expect(response.status(), 'création de la marque de test').toBe(201);
+      expect(response.status(), 'create the test brand').toBe(201);
       const brand = parseWithSchema(BrandSchema, await response.json());
       cleanup.brand(brand.id);
       return brand;
@@ -68,12 +72,18 @@ export const test = base.extend<Fixtures>({
     await use(async () => {
       const data = newCustomerData();
       const response = await api.registerUser(data);
-      expect(response.status(), 'inscription du client de test').toBe(201);
+      expect(response.status(), 'register the test customer').toBe(201);
       const { id } = await response.json();
       cleanup.user(id);
       const token = await api.getToken(data.email, data.password);
       return { id, email: data.email, token };
     });
+  },
+
+  customerPage: async ({ page, customerToken }, use) => {
+    // A browser page already signed in as the demo customer, without the login form
+    await signInWithToken(page, customerToken);
+    await use(page);
   },
 });
 
