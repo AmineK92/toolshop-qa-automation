@@ -71,4 +71,9 @@ export class ToolshopApi {
   deleteUser(id: string, token: string): Promise<APIResponse> {
     return this.request.delete(`/users/${id}`, { headers: authHeader(token) });
   }
+
+  // --- Invoices ---
+  getInvoices(token: string): Promise<APIResponse> {
+    return this.request.get('/invoices', { headers: authHeader(token) });
+  }
 }

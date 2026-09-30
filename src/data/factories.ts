@@ -24,7 +24,7 @@ export function newCustomerData() {
       house_number: '100',
       city: 'Montréal',
       state: 'Québec',
-      country: 'Canada',
+      country: 'CA',
       postal_code: 'H2X 1Y4',
     },
   };

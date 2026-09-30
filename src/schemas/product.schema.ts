@@ -17,3 +17,5 @@ export const ProductPageSchema = z.object({
   total: z.number().int(),
   data: z.array(ProductSchema),
 });
+
+export type Product = z.infer<typeof ProductSchema>;
