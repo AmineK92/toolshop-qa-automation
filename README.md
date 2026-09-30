@@ -9,7 +9,19 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 4. `npx playwright test`
 
 ## Status
-Day 1: environment set up, first API and UI tests.
+- environment set up, first API and UI tests.
+
+## What is tested (UI)
+- Page Object Model with a reusable header component
+- Sign-in through the form, and through the API with a token injected into the browser
+- Access control: protected pages redirect anonymous visitors to the login page
+- End-to-end checkout for a new customer, confirmed through the API
+- Resilience: API failures simulated with network interception
+
+## Observations (documented with `test.fail`)
+- Brands can be created without authentication (`POST /brands`)
+- "Payment was successful" is shown before the order exists; a second click places it
+- The home page stays in its loading state when the product list request fails
 
 ## What is tested (API)
 - Authentication: token contract, invalid credentials, protected endpoints
