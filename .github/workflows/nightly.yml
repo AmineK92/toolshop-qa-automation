@@ -1,0 +1,127 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests (shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shardIndex: [1, 2, 3]
+        shardTotal: [3]
+    env:
+      ALL_BROWSERS: 'true'
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+        
+      - name: Start the Toolshop
+        run: docker compose up -d
+
+      - name: Seed the database
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T laravel-api php artisan migrate:fresh --seed --force; then
+              exit 0
+            fi
+            echo "Database not ready yet (attempt $attempt), retrying in 5 seconds"
+            sleep 5
+          done
+          echo "The database could not be seeded"
+          exit 1
+
+      - name: Wait for the API
+        run: curl --fail --silent --output /dev/null --retry 60 --retry-delay 5 --retry-all-errors http://localhost:8091/products
+
+      - name: Wait for the web app
+        run: curl --fail --silent --output /dev/null --retry 120 --retry-delay 5 --retry-all-errors http://localhost:4200
+
+      - name: Create the .env file
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+
+      - name: Install the three browsers
+        run: npx playwright install --with-deps
+
+      - name: Run this shard of the tests
+        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --reporter=list,blob
+
+      - name: Show the Toolshop logs
+        if: failure()
+        run: docker compose logs --tail 200
+
+      - name: Upload the partial report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shardIndex }}
+          path: blob-report
+          retention-days: 1
+
+  report:
+    name: Merge and publish the report
+    if: ${{ !cancelled() }}
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download the partial reports
+        uses: actions/download-artifact@v8
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge them into one HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Prepare the report for GitHub Pages
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: playwright-report
+
+      - name: Publish the report
+        id: deployment
+        uses: actions/deploy-pages@v4
