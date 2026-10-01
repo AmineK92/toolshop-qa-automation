@@ -11,7 +11,7 @@ permissions:
 jobs:
   test:
     name: Tests (shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -85,7 +85,7 @@ jobs:
     name: Merge and publish the report
     if: ${{ !cancelled() }}
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       pages: write
@@ -118,10 +118,10 @@ jobs:
         run: npx playwright merge-reports --reporter html ./all-blob-reports
 
       - name: Prepare the report for GitHub Pages
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: playwright-report
 
       - name: Publish the report
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
