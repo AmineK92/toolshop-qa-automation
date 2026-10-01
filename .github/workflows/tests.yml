@@ -35,6 +35,9 @@ jobs:
       - name: Lint
         run: npx eslint .
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
       - name: Start the Toolshop
         run: docker compose up -d
 
