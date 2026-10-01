@@ -1,0 +1,79 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint, type check and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check types
+        run: npx tsc
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Start the Toolshop
+        run: docker compose up -d
+
+      - name: Seed the database
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T laravel-api php artisan migrate:fresh --seed --force; then
+              exit 0
+            fi
+            echo "Database not ready yet (attempt $attempt), retrying in 5 seconds"
+            sleep 5
+          done
+          echo "The database could not be seeded"
+          exit 1
+
+      - name: Wait for the API and the web app
+        run: |
+          curl --fail --silent --output /dev/null --retry 60 --retry-delay 5 --retry-all-errors http://localhost:8091/products
+          curl --fail --silent --output /dev/null --retry 60 --retry-delay 5 --retry-all-errors http://localhost:4200
+
+      - name: Create the .env file
+        run: echo "$ENV_FILE" > .env
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the tests
+        run: npx playwright test
+
+      - name: Show the Toolshop logs
+        if: failure()
+        run: docker compose logs --tail 200
+
+      - name: Upload the test report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
