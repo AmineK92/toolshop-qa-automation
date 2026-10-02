@@ -34,7 +34,13 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - End-to-end checkout for a new customer, confirmed through the API
 - Resilience: API failures simulated with network interception
 
+## What is tested (accessibility)
+- Automated WCAG 2.1 AA scans with axe-core on the home, login and product pages
+- Known violations are listed in the tests: a new violation, or a fixed one, makes the suite fail
+
 ## Observations (documented with `test.fail`)
 - Brands can be created without authentication (`POST /brands`)
 - "Payment was successful" is shown before the order exists; a second click places it
 - The home page stays in its loading state when the product list request fails
+- Accessibility: the show/hide password button has no accessible name (`button-name`)
+- Accessibility: the sub-category filters are not a valid list structure (`list`)
