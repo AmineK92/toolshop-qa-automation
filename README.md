@@ -38,6 +38,10 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - Automated WCAG 2.1 AA scans with axe-core on the home, login and product pages
 - Known violations are listed in the tests: a new violation, or a fixed one, makes the suite fail
 
+## What is tested (visual)
+- Screenshot comparisons of the login and product pages, with dynamic areas masked
+- One set of reference screenshots per operating system; the Linux ones are generated in CI by a dedicated workflow
+
 ## Observations (documented with `test.fail`)
 - Brands can be created without authentication (`POST /brands`)
 - "Payment was successful" is shown before the order exists; a second click places it
