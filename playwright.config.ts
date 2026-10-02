@@ -15,6 +15,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
+  expect: {
+    // The local Toolshop is slow (emulated API server, development build): allow 10 s instead of 5
+    timeout: 10_000,
+  },
   use: {
     baseURL: config.uiUrl,
     testIdAttribute: 'data-test',
@@ -24,6 +28,7 @@ export default defineConfig({
   projects: [
     { name: 'api', testDir: './tests/api' },
     { name: 'ui-chromium', testDir: './tests/ui', use: { ...devices['Desktop Chrome'], locale: 'en-US' } },
+    { name: 'a11y', testDir: './tests/a11y', use: { ...devices['Desktop Chrome'], locale: 'en-US' } },
     ...extraBrowsers,
   ],
 });
