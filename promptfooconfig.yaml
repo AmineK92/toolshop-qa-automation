@@ -1,0 +1,113 @@
+# Evaluation of the AI triage prompt (prompts/triage.txt) on known failures
+description: Triage of failed Playwright tests
+
+prompts:
+  - file://prompts/triage.txt
+
+providers:
+  - id: google:gemini-3.5-flash-lite
+    config:
+      generationConfig:
+        response_mime_type: application/json
+        response_schema:
+          type: object
+          properties:
+            category:
+              type: string
+              enum: [product-bug, test-bug, environment, flaky]
+            confidence:
+              type: string
+              enum: [low, medium, high]
+            explanation:
+              type: string
+            next_step:
+              type: string
+          required: [category, confidence, explanation, next_step]
+
+defaultTest:
+  options:
+    # Judge used by the llm-rubric assertions (an independent model would be better)
+    provider: google:gemini-3.5-flash-lite
+  assert:
+    - type: is-json
+    - type: javascript
+      value: "(typeof output === 'string' ? JSON.parse(output) : output).category === context.vars.expected"
+    - type: llm-rubric
+      value: The explanation relies on concrete evidence taken from the failure message, and the next step is a single concrete action.
+    - type: latency
+      threshold: 15000
+
+evaluateOptions:
+  # Free tier: one request at a time, spaced out to stay under the rate limit
+  maxConcurrency: 1
+  delay: 5000
+
+tests:
+  - description: API unreachable
+    vars:
+      expected: environment
+      failure: |
+        Test: api/authentification.spec.ts › successful login returns a valid token [api]
+        Error: apiRequestContext.post: connect ECONNREFUSED ::1:8091
+        Call log:
+          - → POST http://localhost:8091/users/login
+
+  - description: Typo in an expected value
+    vars:
+      expected: test-bug
+      failure: |
+        Test: ui/connexion.spec.ts › customer signs in with the form and lands on the account page [ui-chromium]
+        Error: expect(locator).toHaveText(expected) failed
+        Locator: getByTestId('page-title')
+        Expected string: "My acount"
+        Received string: "My account"
+
+  - description: Missing authentication check
+    vars:
+      expected: product-bug
+      failure: |
+        Test: api/securite.spec.ts › creating a brand without a token is refused [api]
+        Error: expect(received).toBe(expected)
+        Expected: 401
+        Received: 201
+        The brand was created although the request had no Authorization header.
+
+  - description: Database not seeded
+    vars:
+      expected: environment
+      failure: |
+        Test: api/produits.spec.ts › product list matches the contract [api]
+        Error: expect(received).toBe(expected)
+        Expected: 200
+        Received: 500
+        Response body: {"message":"SQLSTATE[42S02]: Base table or view not found: 1146 Table 'toolshop.products' doesn't exist"}
+
+  - description: Outdated selector in the test
+    vars:
+      expected: test-bug
+      failure: |
+        Test: ui/account.spec.ts › a signed-in customer can sign out [ui-chromium]
+        Error: locator.click: Timeout 10000ms exceeded.
+        Call log:
+          - waiting for getByTestId('nav-signout')
+        Page snapshot: the user menu contains a link with data-test="nav-sign-out".
+
+  - description: Timing issue that passed on retry
+    vars:
+      expected: flaky
+      failure: |
+        Test: a11y/accessibility.spec.ts › home page has no new accessibility violations [a11y]
+        Error: expect(locator).toBeVisible() failed
+        Locator: getByTestId('product-name').first()
+        Timeout: 10000ms
+        The same test passed on retry #1, and on the previous 20 nightly runs.
+
+  - description: Wrong invoice total
+    vars:
+      expected: product-bug
+      failure: |
+        Test: ui/checkout.spec.ts › invoice total matches the cart total [ui-chromium]
+        Error: expect(received).toBe(expected)
+        Expected: 45.5
+        Received: 50.05
+        The cart shows 45.50 $ but the invoice returned by GET /invoices/{id} has a total of 50.05 $.

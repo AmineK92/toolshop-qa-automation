@@ -1,0 +1,40 @@
+name: AI evaluation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prompts/**'
+      - 'promptfooconfig.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: Evaluate the triage prompt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Run the evaluation
+        run: npx --yes promptfoo@latest eval --no-progress-bar --output promptfoo-results.html
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+
+      - name: Upload the evaluation report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: promptfoo-results
+          path: promptfoo-results.html
+          retention-days: 14
