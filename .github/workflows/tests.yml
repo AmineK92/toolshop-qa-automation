@@ -70,6 +70,12 @@ jobs:
       - name: Run the tests
         run: npx playwright test
 
+      - name: Triage the failures with AI
+        if: failure()
+        run: node scripts/triage-failures.mts
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+
       - name: Show the Toolshop logs
         if: failure()
         run: docker compose logs --tail 200
