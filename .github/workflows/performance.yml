@@ -1,0 +1,59 @@
+name: Performance
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  load-test:
+    name: Load test of the catalog API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      # The web image is only published for ARM processors: QEMU lets this x86 machine run it
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      # Only the API services: the web app would compete with the API for the CPU
+      - name: Start the Toolshop API
+        run: docker compose up -d laravel-api web mariadb
+
+      - name: Seed the database
+        run: |
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T laravel-api php artisan migrate:fresh --seed --force; then
+              exit 0
+            fi
+            echo "Database not ready yet (attempt $attempt), retrying in 5 seconds"
+            sleep 5
+          done
+          echo "The database could not be seeded"
+          exit 1
+
+      - name: Wait for the API
+        run: curl --fail --silent --output /dev/null --retry 60 --retry-delay 5 --retry-all-errors http://localhost:8091/products
+
+      - name: Install k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run the load test
+        run: k6 run perf/catalog.js
+        env:
+          K6_WEB_DASHBOARD: 'true'
+          K6_WEB_DASHBOARD_EXPORT: perf-report.html
+
+      - name: Upload the performance report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: performance-report
+          path: perf-report.html
+          retention-days: 14
