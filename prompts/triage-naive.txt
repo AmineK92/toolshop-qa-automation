@@ -1,0 +1,3 @@
+Classify this failed test as product-bug, test-bug, environment or flaky, and explain why.
+
+{{failure}}
