@@ -42,6 +42,11 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - Screenshot comparisons of the login and product pages, with dynamic areas masked
 - One set of reference screenshots per operating system; the Linux ones are generated in CI by a dedicated workflow
 
+## Performance (k6)
+- Load test of the catalog API: up to 10 virtual users browsing the product list, product pages and search
+- Thresholds on error rate and 95th percentile response time, calibrated from a measured baseline; the run fails if they are not met
+- Runs nightly in GitHub Actions against the Toolshop API started in the pipeline, with an HTML report as artifact
+
 ## Observations (documented with `test.fail`)
 - Brands can be created without authentication (`POST /brands`)
 - "Payment was successful" is shown before the order exists; a second click places it
