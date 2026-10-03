@@ -47,6 +47,10 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - Thresholds on error rate and 95th percentile response time, calibrated from a measured baseline; the run fails if they are not met
 - Runs nightly in GitHub Actions against the Toolshop API started in the pipeline, with an HTML report as artifact
 
+## AI-assisted triage
+- When tests fail in CI, a script sends each failure to a language model (Gemini) and adds a suggested category (product bug, test bug, environment, flaky) and a next step to the job summary
+- The prompt lives in `prompts/triage.txt`; the suggestions are a starting point, never a verdict
+
 ## Observations (documented with `test.fail`)
 - Brands can be created without authentication (`POST /brands`)
 - "Payment was successful" is shown before the order exists; a second click places it
