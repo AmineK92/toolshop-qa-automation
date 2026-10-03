@@ -47,6 +47,11 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - Thresholds on error rate and 95th percentile response time, calibrated from a measured baseline; the run fails if they are not met
 - Runs nightly in GitHub Actions against the Toolshop API started in the pipeline, with an HTML report as artifact
 
+## AI evaluation (promptfoo)
+- The triage prompt is tested against a set of known failures: valid JSON, expected category, model-graded explanation and latency
+- A naive prompt is used as a baseline to measure the benefit of the detailed prompt
+- The evaluation runs in CI whenever the prompt changes, so a prompt regression is caught early
+
 ## AI-assisted triage
 - When tests fail in CI, a script sends each failure to a language model (Gemini) and adds a suggested category (product bug, test bug, environment, flaky) and a next step to the job summary
 - The prompt lives in `prompts/triage.txt`; the suggestions are a starting point, never a verdict
