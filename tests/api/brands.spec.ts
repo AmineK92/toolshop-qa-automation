@@ -4,7 +4,7 @@ import { BrandSchema } from '../../src/schemas/brand.schema';
 import { parseWithSchema } from '../../src/schemas/parse';
 
 test('brand lifecycle: create, read, update and delete', async ({ api, adminToken, cleanup }) => {
-  const brand = await test.step('créer la marque', async () => {
+  const brand = await test.step('create the brand', async () => {
     const data = newBrandData();
     const response = await api.createBrand(data);
     expect(response.status()).toBe(201);
@@ -15,13 +15,13 @@ test('brand lifecycle: create, read, update and delete', async ({ api, adminToke
     return created;
   });
 
-  await test.step('la relire', async () => {
+  await test.step('read it back', async () => {
     const response = await api.getBrand(brand.id);
     expect(response.status()).toBe(200);
     expect(parseWithSchema(BrandSchema, await response.json())).toEqual(brand);
   });
 
-  await test.step('la modifier', async () => {
+  await test.step('update it', async () => {
     const newData = newBrandData();
     const response = await api.updateBrand(brand.id, newData);
     expect(response.status()).toBe(200);
@@ -31,7 +31,7 @@ test('brand lifecycle: create, read, update and delete', async ({ api, adminToke
     expect(reread.name).toBe(newData.name);
   });
 
-  await test.step('la supprimer en tant qu’administrateur', async () => {
+  await test.step('delete it as an admin', async () => {
     const response = await api.deleteBrand(brand.id, adminToken);
     expect(response.status()).toBe(204);
 
@@ -50,7 +50,7 @@ test('creating a brand with an empty body returns 422 with name and slug errors'
 });
 
 test('creating a brand with spaces in the slug returns 422', async ({ api }) => {
-  const response = await api.createBrand({ name: 'Marque QA', slug: 'slug avec espaces' });
+  const response = await api.createBrand({ name: 'QA Brand', slug: 'slug with spaces' });
   expect(response.status()).toBe(422);
   expect(await response.json()).toHaveProperty('slug');
 });
@@ -58,7 +58,7 @@ test('creating a brand with spaces in the slug returns 422', async ({ api }) => 
 test('creating a brand with a duplicate slug returns 409', async ({ api, createTestBrand }) => {
   const existing = await createTestBrand();
 
-  const duplicate = await api.createBrand({ name: 'Autre nom', slug: existing.slug });
+  const duplicate = await api.createBrand({ name: 'Another name', slug: existing.slug });
   expect(duplicate.status()).toBe(409);
   expect(await duplicate.json()).toEqual({ slug: ['A brand already exists with this slug.'] });
 });

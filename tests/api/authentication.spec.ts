@@ -10,7 +10,7 @@ test('login with valid credentials returns a token that matches the contract', a
 });
 
 test('login with an unknown email returns 401 Unauthorized', async ({ api }) => {
-  const response = await api.login('inconnu@example.com', 'mauvais-mot-de-passe');
+  const response = await api.login('unknown@example.com', 'wrong-password');
   expect(response.status()).toBe(401);
   expect(await response.json()).toEqual({ error: 'Unauthorized' });
 });

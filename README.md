@@ -2,10 +2,11 @@
 
 [![Tests](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/tests.yml/badge.svg)](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/tests.yml)
 [![Nightly](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/nightly.yml/badge.svg)](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/nightly.yml)
+<!-- AZURE-BADGE: replace this line with the Markdown copied from Azure DevOps (pipeline > ... > Status badge) -->
 
 End-to-end test automation project (Playwright + TypeScript) targeting the Toolshop demo e-commerce application.
 
-**Stack:** Playwright, TypeScript, Zod, ESLint, Docker Compose, GitHub Actions
+**Stack:** Playwright, TypeScript, Zod, ESLint, axe-core, k6, promptfoo, Gemini API, Docker Compose, GitHub Actions, Azure Pipelines
 
 **Latest nightly report (Chromium, Firefox and WebKit):** https://aminek92.github.io/toolshop-qa-automation/
 
@@ -15,12 +16,13 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 3. `npm install` then `npx playwright install`
 4. Create your `.env` file from the template: `cp .env.example .env` (on Windows: `copy .env.example .env`)
 5. `npx playwright test`
+6. Optional: add a Gemini API key to `.env` (`GOOGLE_API_KEY`), then run the AI triage with `node --env-file=.env scripts/triage-failures.mts` and the evaluation with `npx promptfoo@latest eval`
 
-## Continuous integration (GitHub Actions)
-- **On every push and pull request:** type check, lint, then the full API and UI suite on Chromium, against a Toolshop instance started with Docker Compose
-- **Every night:** the same suite on Chromium, Firefox and WebKit, split across 3 parallel machines (sharding); the merged HTML report is published on GitHub Pages
-- Credentials are stored as GitHub Actions secrets, never in the repository
-- **Azure Pipelines:** the same suite runs nightly on Microsoft-hosted agents, with JUnit results published in the Tests tab
+## Continuous integration
+- **On every push and pull request (GitHub Actions):** type check, lint, then the full suite on Chromium, against a Toolshop instance started with Docker Compose
+- **Every night (GitHub Actions):** the same suite on Chromium, Firefox and WebKit, split across 3 parallel machines (sharding); the merged HTML report is published on GitHub Pages
+- **Every night (Azure Pipelines):** the same suite on Microsoft-hosted agents, with JUnit results published in the Tests tab
+- Credentials are stored as CI secrets (GitHub Actions secrets, Azure DevOps secure files), never in the repository
 
 ## What is tested (API)
 - Authentication: token contract, invalid credentials, protected endpoints
@@ -48,16 +50,16 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - Thresholds on error rate and 95th percentile response time, calibrated from a measured baseline; the run fails if they are not met
 - Runs nightly in GitHub Actions against the Toolshop API started in the pipeline, with an HTML report as artifact
 
-## AI evaluation (promptfoo)
-- The triage prompt is tested against a set of known failures: valid JSON, expected category, model-graded explanation and latency
-- A naive prompt is used as a baseline to measure the benefit of the detailed prompt
-- The evaluation runs in CI whenever the prompt changes, so a prompt regression is caught early
-
 ## AI-assisted triage
 - When tests fail in CI, a script sends each failure to a language model (Gemini) and adds a suggested category (product bug, test bug, environment, flaky) and a next step to the job summary
 - The prompt lives in `prompts/triage.txt`; the suggestions are a starting point, never a verdict
 
-## Observations (documented with `test.fail`)
+## AI evaluation (promptfoo)
+- The triage prompt is tested against a set of known failures: valid JSON, expected category, model-graded explanation and latency
+- A naive prompt (`prompts/triage-naive.txt`) is kept as a baseline to measure the benefit of the detailed prompt
+- The evaluation runs in CI whenever the prompt changes, so a prompt regression is caught early
+
+## Observations (found and documented by the tests)
 - Brands can be created without authentication (`POST /brands`)
 - "Payment was successful" is shown before the order exists; a second click places it
 - The home page stays in its loading state when the product list request fails

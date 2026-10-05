@@ -4,6 +4,8 @@ import { InvoicePageSchema } from '../../src/schemas/invoice.schema';
 import { parseWithSchema } from '../../src/schemas/parse';
 
 test('a new customer buys a product and receives an invoice', async ({ page, api, createTestCustomer }) => {
+  // Long end-to-end journey: allow three times the default timeout
+  test.slow();
   const customer = await createTestCustomer();
   const checkout = await checkoutUntilPayment(page, api, customer);
 
@@ -25,6 +27,8 @@ test('a new customer buys a product and receives an invoice', async ({ page, api
 });
 
 test('observation: the first confirmation click should place the order', async ({ page, api, createTestCustomer }) => {
+  // Long end-to-end journey: allow three times the default timeout
+  test.slow();
   const customer = await createTestCustomer();
   const checkout = await checkoutUntilPayment(page, api, customer);
 

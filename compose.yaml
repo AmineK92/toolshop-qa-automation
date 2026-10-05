@@ -1,4 +1,4 @@
-# Application à tester : Toolshop (images officielles préconstruites)
+# Application under test: Toolshop (official prebuilt images)
 name: toolshop
 
 services:

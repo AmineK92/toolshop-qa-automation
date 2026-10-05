@@ -3,7 +3,7 @@ import type { NewCustomer } from '../data/factories';
 
 export type BrandInput = { name: string; slug: string };
 
-// Ajoute l'en-tête d'authentification uniquement si un jeton est fourni.
+// Adds the authentication header only when a token is provided.
 function authHeader(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
@@ -11,7 +11,7 @@ function authHeader(token?: string): Record<string, string> {
 export class ToolshopApi {
   constructor(private readonly request: APIRequestContext) {}
 
-  // --- Authentification ---
+  // --- Authentication ---
   login(email: string, password: string): Promise<APIResponse> {
     return this.request.post('/users/login', { data: { email, password } });
   }
@@ -19,7 +19,7 @@ export class ToolshopApi {
   async getToken(email: string, password: string): Promise<string> {
     const response = await this.login(email, password);
     if (!response.ok()) {
-      throw new Error(`Connexion impossible pour ${email} (statut ${response.status()})`);
+      throw new Error(`Login failed for ${email} (status ${response.status()})`);
     }
     const body = await response.json();
     return body.access_token;
@@ -29,12 +29,12 @@ export class ToolshopApi {
     return this.request.get('/users/me', { headers: authHeader(token) });
   }
 
-  // --- Produits ---
+  // --- Products ---
   getProducts(): Promise<APIResponse> {
     return this.request.get('/products');
   }
 
-  // --- Marques ---
+  // --- Brands ---
   createBrand(data: Partial<BrandInput>, token?: string): Promise<APIResponse> {
     return this.request.post('/brands', { data, headers: authHeader(token) });
   }
@@ -51,7 +51,7 @@ export class ToolshopApi {
     return this.request.delete(`/brands/${id}`, { headers: authHeader(token) });
   }
 
-  // --- Utilisateurs ---
+  // --- Users ---
   registerUser(data: NewCustomer): Promise<APIResponse> {
     return this.request.post('/users/register', { data });
   }

@@ -17,12 +17,12 @@ test('BOLA: a customer cannot read another customer\'s profile', async ({ api, c
   const alice = await createTestCustomer();
   const bob = await createTestCustomer();
 
-  await test.step('contrôle : Alice lit son propre profil', async () => {
+  await test.step('control: Alice reads her own profile', async () => {
     const response = await api.getUser(alice.id, alice.token);
     expect(response.status()).toBe(200);
   });
 
-  await test.step('Alice tente de lire le profil de Bob', async () => {
+  await test.step('Alice tries to read Bob\'s profile', async () => {
     const response = await api.getUser(bob.id, alice.token);
     expect(response.status()).toBe(404);
     expect(await response.text()).not.toContain(bob.email);
@@ -30,24 +30,24 @@ test('BOLA: a customer cannot read another customer\'s profile', async ({ api, c
 });
 
 test('only an admin can list users', async ({ api, adminToken, customerToken }) => {
-  await test.step('contrôle : l’administrateur obtient la liste', async () => {
+  await test.step('control: the admin gets the list', async () => {
     const response = await api.listUsers(adminToken);
     expect(response.status()).toBe(200);
   });
 
-  await test.step('le client est refusé (403)', async () => {
+  await test.step('the customer is refused (403)', async () => {
     const response = await api.listUsers(customerToken);
     expect(response.status()).toBe(403);
   });
 });
 
 test('a customer cannot make themselves admin (mass assignment)', async ({ api, createTestCustomer }) => {
-  const client = await createTestCustomer();
+  const customer = await createTestCustomer();
 
-  const response = await api.patchUser(client.id, { role: 'admin' }, client.token);
-  expect(response.status(), 'l’API ne doit pas planter').toBeLessThan(500);
+  const response = await api.patchUser(customer.id, { role: 'admin' }, customer.token);
+  expect(response.status(), 'the API must not crash').toBeLessThan(500);
 
-  const adminOnly = await api.listUsers(client.token);
+  const adminOnly = await api.listUsers(customer.token);
   expect(adminOnly.status()).toBe(403);
 });
 
