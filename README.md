@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/tests.yml/badge.svg)](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/tests.yml)
 [![Nightly](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/nightly.yml/badge.svg)](https://github.com/AmineK92/toolshop-qa-automation/actions/workflows/nightly.yml)
-<!-- AZURE-BADGE: replace this line with the Markdown copied from Azure DevOps (pipeline > ... > Status badge) -->
+[![Build Status](https://dev.azure.com/aminek92/toolshop-qa-automation/_apis/build/status%2FAmineK92.toolshop-qa-automation?branchName=main)](https://dev.azure.com/aminek92/toolshop-qa-automation/_build/latest?definitionId=1&branchName=main)
 
 End-to-end test automation project (Playwright + TypeScript) targeting the Toolshop demo e-commerce application.
 
