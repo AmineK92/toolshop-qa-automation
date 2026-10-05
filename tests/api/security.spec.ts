@@ -51,13 +51,18 @@ test('a customer cannot make themselves admin (mass assignment)', async ({ api, 
   expect(adminOnly.status()).toBe(403);
 });
 
-test.fail('observation : créer une marque devrait exiger d’être connecté', {
-  annotation: {
+test('observation: creating a brand should require authentication', async ({ api, cleanup }) => {
+  // Precondition: the API answers normally, so a failure below can only come from the observation
+  expect((await api.getProducts()).status()).toBe(200);
+
+  // Only the assertion below is expected to fail: it documents the observation
+  test.fail();
+  test.info().annotations.push({
     type: 'observation',
-    description: 'POST /brands accepte une requête anonyme (201). À confirmer avec l’équipe produit.',
-  },
-}, async ({ api, cleanup }) => {
+    description: 'POST /brands accepts anonymous requests and creates the brand (201 instead of 401).',
+  });
   const response = await api.createBrand(newBrandData());
-  cleanup.brand((await response.json()).id);
+  const body = await response.json();
+  cleanup.brand(body.id); // today the brand is created: make sure it is deleted after the test
   expect(response.status()).toBe(401);
 });

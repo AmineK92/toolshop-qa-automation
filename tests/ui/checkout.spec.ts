@@ -24,17 +24,20 @@ test('a new customer buys a product and receives an invoice', async ({ page, api
   });
 });
 
-test.fail('observation: the first confirmation click should place the order', {
-  annotation: {
-    type: 'observation',
-    description: '"Payment was successful" is displayed after the first click, but the order is only created by a second click.',
-  },
-}, async ({ page, api, createTestCustomer }) => {
+test('observation: the first confirmation click should place the order', async ({ page, api, createTestCustomer }) => {
   const customer = await createTestCustomer();
   const checkout = await checkoutUntilPayment(page, api, customer);
 
   await checkout.selectCashOnDelivery();
   await checkout.confirmButton.click();
   await expect(checkout.paymentSuccessMessage).toBeVisible();
+
+  // Only the assertion below is expected to fail: it documents the observation.
+  // A failure before this line is reported as a real failure.
+  test.fail();
+  test.info().annotations.push({
+    type: 'observation',
+    description: '"Payment was successful" is displayed after the first click, but the order is only created by a second click.',
+  });
   await expect(checkout.orderConfirmation).toBeVisible({ timeout: 5_000 });
 });
