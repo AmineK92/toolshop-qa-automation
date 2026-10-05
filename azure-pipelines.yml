@@ -1,0 +1,96 @@
+# Azure Pipelines: the Playwright suite on Microsoft-hosted Linux agents
+trigger: none
+pr: none
+
+schedules:
+  - cron: '0 9 * * *'
+    displayName: Nightly run
+    branches:
+      include:
+        - main
+    always: true
+
+pool:
+  vmImage: ubuntu-24.04
+
+variables:
+  # Playwright reads CI to enable retries; Azure Pipelines does not set it by itself
+  CI: 'true'
+
+jobs:
+  - job: tests
+    displayName: Playwright tests
+    # The free tier allows up to 60 minutes per job
+    timeoutInMinutes: 50
+    steps:
+      - checkout: self
+
+      - task: UseNode@1
+        displayName: Set up Node.js
+        inputs:
+          version: '24.x'
+
+      - bash: npm ci
+        displayName: Install dependencies
+
+      # The web image is only published for ARM processors: register QEMU so this x86 agent can run it
+      - bash: docker run --privileged --rm tonistiigi/binfmt --install arm64
+        displayName: Enable ARM emulation
+
+      - bash: docker compose up -d
+        displayName: Start the Toolshop
+
+      - bash: |
+          for attempt in $(seq 1 30); do
+            if docker compose exec -T laravel-api php artisan migrate:fresh --seed --force; then
+              exit 0
+            fi
+            echo "Database not ready yet (attempt $attempt), retrying in 5 seconds"
+            sleep 5
+          done
+          echo "The database could not be seeded"
+          exit 1
+        displayName: Seed the database
+
+      - bash: curl --fail --silent --output /dev/null --retry 60 --retry-delay 5 --retry-all-errors http://localhost:8091/products
+        displayName: Wait for the API
+
+      # The web app compiles before it starts listening, which can take several minutes
+      - bash: curl --fail --silent --output /dev/null --retry 120 --retry-delay 5 --retry-all-errors http://localhost:4200
+        displayName: Wait for the web app
+
+      - task: DownloadSecureFile@1
+        name: envFile
+        displayName: Download the .env file
+        inputs:
+          secureFile: 'azure.env'
+
+      - bash: cp "$(envFile.secureFilePath)" .env
+        displayName: Create the .env file
+
+      - bash: npx playwright install --with-deps chromium
+        displayName: Install Chromium
+
+      - bash: npx playwright test --reporter=list,junit,html
+        displayName: Run the tests
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: results.xml
+
+      - bash: docker compose logs --tail 200
+        displayName: Show the Toolshop logs
+        condition: failed()
+
+      - task: PublishTestResults@2
+        displayName: Publish the test results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: results.xml
+          testRunTitle: Playwright
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish the HTML report
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: playwright-report
+          artifact: playwright-report
