@@ -3,7 +3,7 @@ import { newBrandData } from '../../src/data/factories';
 import { BrandSchema } from '../../src/schemas/brand.schema';
 import { parseWithSchema } from '../../src/schemas/parse';
 
-test('cycle de vie d’une marque : création, lecture, modification, suppression', async ({ api, adminToken, cleanup }) => {
+test('brand lifecycle: create, read, update and delete', async ({ api, adminToken, cleanup }) => {
   const brand = await test.step('créer la marque', async () => {
     const data = newBrandData();
     const response = await api.createBrand(data);
@@ -40,7 +40,7 @@ test('cycle de vie d’une marque : création, lecture, modification, suppressio
   });
 });
 
-test('création refusée si le nom et le slug manquent (422)', async ({ api }) => {
+test('creating a brand with an empty body returns 422 with name and slug errors', async ({ api }) => {
   const response = await api.createBrand({});
   expect(response.status()).toBe(422);
 
@@ -49,13 +49,13 @@ test('création refusée si le nom et le slug manquent (422)', async ({ api }) =
   expect(errors).toHaveProperty('slug');
 });
 
-test('création refusée pour un slug contenant des espaces (422)', async ({ api }) => {
+test('creating a brand with spaces in the slug returns 422', async ({ api }) => {
   const response = await api.createBrand({ name: 'Marque QA', slug: 'slug avec espaces' });
   expect(response.status()).toBe(422);
   expect(await response.json()).toHaveProperty('slug');
 });
 
-test('création refusée pour un slug déjà utilisé (409)', async ({ api, createTestBrand }) => {
+test('creating a brand with a duplicate slug returns 409', async ({ api, createTestBrand }) => {
   const existing = await createTestBrand();
 
   const duplicate = await api.createBrand({ name: 'Autre nom', slug: existing.slug });

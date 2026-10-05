@@ -1,19 +1,19 @@
 import { test, expect } from '../../src/fixtures';
 import { newBrandData } from '../../src/data/factories';
 
-test('supprimer une marque sans être connecté est refusé (401)', async ({ api, createTestBrand }) => {
+test('deleting a brand without a token returns 401', async ({ api, createTestBrand }) => {
   const brand = await createTestBrand();
   const response = await api.deleteBrand(brand.id);
   expect(response.status()).toBe(401);
 });
 
-test('un client ne peut pas supprimer une marque (403)', async ({ api, createTestBrand, customerToken }) => {
+test('a customer cannot delete a brand (403)', async ({ api, createTestBrand, customerToken }) => {
   const brand = await createTestBrand();
   const response = await api.deleteBrand(brand.id, customerToken);
   expect(response.status()).toBe(403);
 });
 
-test('un client ne peut pas lire le profil d’un autre client (BOLA)', async ({ api, createTestCustomer }) => {
+test('BOLA: a customer cannot read another customer\'s profile', async ({ api, createTestCustomer }) => {
   const alice = await createTestCustomer();
   const bob = await createTestCustomer();
 
@@ -29,7 +29,7 @@ test('un client ne peut pas lire le profil d’un autre client (BOLA)', async ({
   });
 });
 
-test('seul un administrateur peut lister les utilisateurs', async ({ api, adminToken, customerToken }) => {
+test('only an admin can list users', async ({ api, adminToken, customerToken }) => {
   await test.step('contrôle : l’administrateur obtient la liste', async () => {
     const response = await api.listUsers(adminToken);
     expect(response.status()).toBe(200);
@@ -41,7 +41,7 @@ test('seul un administrateur peut lister les utilisateurs', async ({ api, adminT
   });
 });
 
-test('un client ne peut pas s’attribuer le rôle administrateur (mass assignment)', async ({ api, createTestCustomer }) => {
+test('a customer cannot make themselves admin (mass assignment)', async ({ api, createTestCustomer }) => {
   const client = await createTestCustomer();
 
   const response = await api.patchUser(client.id, { role: 'admin' }, client.token);

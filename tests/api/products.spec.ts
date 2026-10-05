@@ -2,7 +2,7 @@ import { test, expect } from '../../src/fixtures';
 import { parseWithSchema } from '../../src/schemas/parse';
 import { ProductPageSchema } from '../../src/schemas/product.schema';
 
-test('GET /products renvoie une page de produits conforme au contrat', async ({ api }) => {
+test('GET /products returns a page that matches the contract', async ({ api }) => {
   const response = await api.getProducts();
   expect(response.status()).toBe(200);
 

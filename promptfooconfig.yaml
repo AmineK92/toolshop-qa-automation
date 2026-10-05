@@ -47,7 +47,7 @@ tests:
     vars:
       expected: environment
       failure: |
-        Test: api/authentification.spec.ts › successful login returns a valid token [api]
+        Test: api/authentication.spec.ts › successful login returns a valid token [api]
         Error: apiRequestContext.post: connect ECONNREFUSED ::1:8091
         Call log:
           - → POST http://localhost:8091/users/login
@@ -56,7 +56,7 @@ tests:
     vars:
       expected: test-bug
       failure: |
-        Test: ui/connexion.spec.ts › customer signs in with the form and lands on the account page [ui-chromium]
+        Test: ui/login.spec.ts › customer signs in with the form and lands on the account page [ui-chromium]
         Error: expect(locator).toHaveText(expected) failed
         Locator: getByTestId('page-title')
         Expected string: "My acount"
@@ -66,7 +66,7 @@ tests:
     vars:
       expected: product-bug
       failure: |
-        Test: api/securite.spec.ts › creating a brand without a token is refused [api]
+        Test: api/security.spec.ts › creating a brand without a token is refused [api]
         Error: expect(received).toBe(expected)
         Expected: 401
         Received: 201
@@ -76,7 +76,7 @@ tests:
     vars:
       expected: environment
       failure: |
-        Test: api/produits.spec.ts › product list matches the contract [api]
+        Test: api/products.spec.ts › product list matches the contract [api]
         Error: expect(received).toBe(expected)
         Expected: 200
         Received: 500
