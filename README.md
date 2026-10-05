@@ -20,6 +20,7 @@ End-to-end test automation project (Playwright + TypeScript) targeting the Tools
 - **On every push and pull request:** type check, lint, then the full API and UI suite on Chromium, against a Toolshop instance started with Docker Compose
 - **Every night:** the same suite on Chromium, Firefox and WebKit, split across 3 parallel machines (sharding); the merged HTML report is published on GitHub Pages
 - Credentials are stored as GitHub Actions secrets, never in the repository
+- **Azure Pipelines:** the same suite runs nightly on Microsoft-hosted agents, with JUnit results published in the Tests tab
 
 ## What is tested (API)
 - Authentication: token contract, invalid credentials, protected endpoints
